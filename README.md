@@ -132,20 +132,6 @@ scrape_configs:
 
 ---
 
-## Создание репозитория на GitHub
-
-```bash
-cd "Grafana agent"
-git init
-git add .
-git commit -m "Initial commit: Retail Monitoring Stack"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/retail-monitoring-stack.git
-git push -u origin main
-```
-
-Рекомендуемые темы репозитория: `grafana`, `prometheus`, `alloy`, `mikrotik`, `monitoring`, `retail`
-
 ### Версионность
 
 - Версия в файле `VERSION` (сейчас `0.2.0-beta`)
