@@ -74,20 +74,26 @@ footer { margin-top: 2rem; font-size: 0.8rem; color: #666; }
 
 /* Modal */
 .modal {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal-backdrop {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.7); cursor: pointer;
 }
 .modal-content {
+  position: relative; z-index: 1;
   background: var(--card-bg); border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
 }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #333; }
 .modal-header h2 { margin: 0; font-size: 1.2rem; }
-.modal-close { background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem; }
+.modal-close { background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; padding: 0.25rem 0.5rem; line-height: 1; min-width: 2rem; }
 .modal-close:hover { color: #fff; }
+.modal[hidden] { display: none !important; }
 #modal-body { padding: 1.5rem; overflow-y: auto; }
 .detail-section { margin-bottom: 1.5rem; }
 .detail-section h3 { font-size: 1rem; margin-bottom: 0.5rem; color: #0f3460; }
 .detail-section details { margin-top: 0.5rem; }
 .detail-section summary { cursor: pointer; color: #888; }
+.loading { color: #888; font-style: italic; }
 .store-link { color: #4fc3f7; cursor: pointer; text-decoration: underline; }
 .store-link:hover { color: #81d4fa; }
 .metric-row { font-family: monospace; font-size: 0.85rem; padding: 0.25rem 0; }

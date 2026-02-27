@@ -36,7 +36,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max by (store) (up{job=~\"retail_windows|retail_mikrotik\"}) or on(store) (retail_store_expected * 0)",
+          "expr": "max by (store) (up{job=~\"retail_windows|retail_mikrotik\"} and (time() - timestamp(up{job=~\"retail_windows|retail_mikrotik\"}) < 120)) or on(store) (retail_store_expected * 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{store}}",

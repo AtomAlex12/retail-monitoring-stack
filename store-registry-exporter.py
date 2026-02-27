@@ -35,6 +35,9 @@ WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "web
 PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "http://localhost:9090")
 QUERY_INTERVAL = 300
 RETENTION_DAYS = 30
+# Порог "свежести" данных (сек). При remote_write Prometheus не помечает метрики stale,
+# и возвращает последнее значение до 5+ минут. Точки без данных за STALENESS_SEC считаются офлайн.
+STALENESS_SEC = int(os.environ.get("STALENESS_SEC", "120"))
 
 registry: dict[str, float] = {}
 registry_lock = threading.Lock()
@@ -85,7 +88,13 @@ def save_registry():
 
 
 def fetch_stores_from_prometheus():
-    query = 'max by (store) (up{job=~"retail_windows|retail_mikrotik"})'
+    # Фильтр по свежести: только точки с данными за последние STALENESS_SEC.
+    # При remote_write Prometheus не помечает метрики stale — возвращает последнее значение.
+    # Без фильтра точка остаётся "зелёной" 5+ минут после остановки Alloy.
+    query = (
+        f'max by (store) (up{{job=~"retail_windows|retail_mikrotik"}} '
+        f'and (time() - timestamp(up{{job=~"retail_windows|retail_mikrotik"}}) < {STALENESS_SEC}))'
+    )
     url = f"{PROMETHEUS_URL.rstrip('/')}/api/v1/query?{urlencode({'query': query})}"
     try:
         with urlopen(url, timeout=10) as resp:
@@ -95,7 +104,12 @@ def fetch_stores_from_prometheus():
     if data.get("status") != "success":
         return [], data.get("error", "unknown")
     results = data.get("data", {}).get("result", [])
-    return [r["metric"]["store"] for r in results if "store" in r.get("metric", {})], None
+    # Только up=1 (онлайн)
+    return [
+        r["metric"]["store"]
+        for r in results
+        if "store" in r.get("metric", {}) and r.get("value", [None, "0"])[1] == "1"
+    ], None
 
 
 def cleanup_expired():

@@ -16,14 +16,17 @@ function formatDate(iso) {
 }
 
 function escapeHtml(s) {
+  if (s == null) return '';
   const div = document.createElement('div');
-  div.textContent = s;
+  div.textContent = String(s);
   return div.innerHTML;
 }
 
 function openStoreDetail(store) {
+  const modal = document.getElementById('store-modal');
   document.getElementById('modal-title').textContent = 'Точка: ' + store;
-  document.getElementById('store-modal').hidden = false;
+  modal.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
   document.getElementById('detail-windows').innerHTML = '<span class="loading">Загрузка...</span>';
   document.getElementById('detail-interfaces').innerHTML = '';
   document.getElementById('detail-snmp-raw').textContent = '';
@@ -31,53 +34,69 @@ function openStoreDetail(store) {
 
   fetchJSON('/api/store/' + encodeURIComponent(store))
     .then(data => {
-      // Windows
       const winEl = document.getElementById('detail-windows');
+      const ifEl = document.getElementById('detail-interfaces');
+      const windows = data.windows || [];
+      const snmpIfs = data.snmp_interfaces || [];
+      const mikrotik = data.mikrotik || [];
+
       if (data.error) {
-        winEl.innerHTML = '<p class="err">' + data.error + '</p>';
-      } else if (data.windows.length === 0) {
+        winEl.innerHTML = '<p class="err">' + escapeHtml(data.error) + '</p>';
+      } else if (windows.length === 0) {
         winEl.innerHTML = '<p>Нет данных от ПК</p>';
       } else {
-        const up = data.windows.find(m => m.metric === 'up');
-        const mem = data.windows.find(m => m.metric === 'windows_memory_available_bytes');
-        const total = data.windows.find(m => m.metric === 'windows_memory_physical_total_bytes');
+        const up = windows.find(m => m.metric === 'up');
+        const mem = windows.find(m => m.metric === 'windows_memory_available_bytes');
+        const total = windows.find(m => m.metric === 'windows_memory_physical_total_bytes');
         let html = '';
-        if (up) html += '<p class="metric-row">up = ' + up.value + ' ' + (up.value === '1' ? '(онлайн)' : '(офлайн)') + '</p>';
+        if (up) html += '<p class="metric-row">up = ' + escapeHtml(String(up.value)) + ' ' + (up.value === '1' ? '(онлайн)' : '(офлайн)') + '</p>';
         if (mem && total) {
-          const pct = (100 * (1 - mem.value / total.value)).toFixed(1);
+          const memVal = Number(mem.value);
+          const totVal = Number(total.value);
+          const pct = totVal > 0 ? (100 * (1 - memVal / totVal)).toFixed(1) : '—';
           html += '<p class="metric-row">Память занята ≈ ' + pct + '%</p>';
         }
-        html += '<p class="metric-row">Всего метрик: ' + data.windows.length + '</p>';
+        html += '<p class="metric-row">Всего метрик: ' + windows.length + '</p>';
         winEl.innerHTML = html;
       }
 
-      // SNMP интерфейсы
-      const ifEl = document.getElementById('detail-interfaces');
-      if (data.snmp_interfaces.length > 0) {
+      if (snmpIfs.length > 0) {
         ifEl.innerHTML = '<table class="if-table"><thead><tr><th>Интерфейс</th><th>Alias (ICCID/UICC)</th><th>Статус</th></tr></thead><tbody>' +
-          data.snmp_interfaces.map(i => '<tr><td>' + i.ifName + '</td><td>' + (i.ifAlias || '—') + '</td><td class="' + (i.status === 'Up' ? 'up' : 'down') + '">' + i.status + '</td></tr>').join('') +
+          snmpIfs.map(i => '<tr><td>' + escapeHtml(i.ifName || '—') + '</td><td>' + escapeHtml(i.ifAlias || '—') + '</td><td class="' + (i.status === 'Up' ? 'up' : 'down') + '">' + escapeHtml(i.status || '') + '</td></tr>').join('') +
           '</tbody></table>';
-      } else if (data.mikrotik.length > 0) {
-        ifEl.innerHTML = '<p>Метрик SNMP: ' + data.mikrotik.length + '</p>';
+      } else if (mikrotik.length > 0) {
+        ifEl.innerHTML = '<p>Метрик SNMP: ' + mikrotik.length + '</p>';
       } else {
         ifEl.innerHTML = '<p>Нет данных от роутера</p>';
       }
 
-      document.getElementById('detail-snmp-raw').textContent = JSON.stringify(data.mikrotik, null, 2);
-      document.getElementById('detail-windows-raw').textContent = JSON.stringify(data.windows, null, 2);
+      document.getElementById('detail-snmp-raw').textContent = JSON.stringify(mikrotik, null, 2);
+      document.getElementById('detail-windows-raw').textContent = JSON.stringify(windows, null, 2);
     })
     .catch(e => {
-      document.getElementById('detail-windows').innerHTML = '<p class="err">Ошибка: ' + e.message + '</p>';
+      document.getElementById('detail-windows').innerHTML = '<p class="err">Ошибка: ' + escapeHtml(e.message) + '</p>';
     });
 }
 
 function closeModal() {
-  document.getElementById('store-modal').hidden = true;
+  const modal = document.getElementById('store-modal');
+  modal.setAttribute('hidden', '');
+  document.body.style.overflow = '';
 }
 
-document.getElementById('store-modal').addEventListener('click', e => {
-  if (e.target.id === 'store-modal') closeModal();
-});
+function initModal() {
+  const modal = document.getElementById('store-modal');
+  const closeBtn = document.getElementById('modal-close-btn');
+  const backdrop = document.getElementById('modal-backdrop');
+
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (backdrop) backdrop.addEventListener('click', closeModal);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal && !modal.hasAttribute('hidden')) closeModal();
+  });
+}
+
+initModal();
 
 async function refresh() {
   try {
@@ -101,9 +120,10 @@ async function refresh() {
     }
 
     const tbody = document.querySelector('#registry-table tbody');
-    tbody.innerHTML = registry.stores
+    const stores = registry.stores || [];
+    tbody.innerHTML = stores
       .map(({ store, last_seen_iso }) =>
-        '<tr><td><span class="store-link" data-store="' + escapeHtml(store) + '">' + escapeHtml(store) + '</span></td><td>' + escapeHtml(formatDate(last_seen_iso)) + '</td></tr>'
+        '<tr><td><span class="store-link" data-store="' + escapeHtml(store || '') + '">' + escapeHtml(store || '') + '</span></td><td>' + escapeHtml(formatDate(last_seen_iso)) + '</td></tr>'
       )
       .join('') || '<tr><td colspan="2">Нет данных</td></tr>';
 

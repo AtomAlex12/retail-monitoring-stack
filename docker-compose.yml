@@ -9,7 +9,7 @@ services:
       - "9095:9095"
       - "8080:8080"
     environment:
-      - PROMETHEUS_URL=http://192.168.141.49:9090
+      - PROMETHEUS_URL=${PROMETHEUS_URL:-http://192.168.141.49:9090}
       - REGISTRY_FILE=/data/store-registry-state.json
       - WEB_DIR=/web
     volumes:

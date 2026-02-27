@@ -53,9 +53,37 @@
 
 ### 3. На центральном сервере
 
+**Развёртывание из публичного репо (одна команда):**
+
 ```bash
-# Store Registry (опционально, для отображения недоступных точек красным)
-docker compose up -d
+git clone https://github.com/AtomAlex12/retail-monitoring-stack.git && cd retail-monitoring-stack && docker compose up -d
+```
+
+Перед запуском отредактируйте `docker-compose.yml` — укажите `PROMETHEUS_URL` (адрес вашего Prometheus).
+
+**Или без клонирования (только Store Registry):**
+
+```bash
+docker run -d --name store-registry -p 9095:9095 -p 8080:8080 \
+  -e PROMETHEUS_URL=http://ВАШ_PROMETHEUS:9090 \
+  -e REGISTRY_FILE=/data/store-registry-state.json \
+  -v store-registry-data:/data \
+  ghcr.io/atomalex12/retail-monitoring-stack:latest
+```
+
+> Для `ghcr.io` образа нужен [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry). Пока образа нет — используйте `git clone` + `docker compose`.
+
+**Скрипт развёртывания (Linux/macOS):**
+
+```bash
+curl -sSL https://raw.githubusercontent.com/AtomAlex12/retail-monitoring-stack/main/deploy.sh | bash -s http://ВАШ_PROMETHEUS:9090
+```
+
+**PowerShell (Windows):**
+
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AtomAlex12/retail-monitoring-stack/main/deploy.ps1" -OutFile deploy.ps1
+.\deploy.ps1 -PrometheusUrl "http://ВАШ_PROMETHEUS:9090"
 ```
 
 - **Веб‑панель:** http://localhost:8080/
