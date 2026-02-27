@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Store Registry — техническая панель</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Store Registry Exporter</h1>
+    <p class="subtitle">Техническая страница настройки и мониторинга</p>
+  </header>
+
+  <section class="status-cards">
+    <div class="card">
+      <span class="label">Prometheus</span>
+      <span id="prom-url" class="value">—</span>
+      <span id="prom-status" class="badge">...</span>
+    </div>
+    <div class="card">
+      <span class="label">Точек онлайн</span>
+      <span id="stores-up" class="value">—</span>
+    </div>
+    <div class="card">
+      <span class="label">В реестре</span>
+      <span id="stores-registry" class="value">—</span>
+    </div>
+    <div class="card">
+      <span class="label">Последняя синхронизация</span>
+      <span id="last-sync" class="value">—</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Реестр точек</h2>
+    <p class="hint">Точки хранятся 30 дней с момента последнего появления. Редактируйте этот блок в <code>web/index.html</code> при необходимости.</p>
+    <table id="registry-table">
+      <thead>
+        <tr>
+          <th>Точка (store)</th>
+          <th>Последнее появление</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Статус экспортёра</h2>
+    <pre id="status-raw"></pre>
+  </section>
+
+  <footer>
+    <p>Grafana — основной дашборд. Эта страница — для настройки и отладки.</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

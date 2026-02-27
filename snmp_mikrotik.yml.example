@@ -1,0 +1,11 @@
+# Пример конфига snmp_exporter для MikroTik
+# Скопируйте в snmp_mikrotik.yml и настройте под свою версию snmp_exporter
+# См. https://github.com/prometheus/snmp_exporter
+
+modules:
+  if_mib:
+    walk:
+      - 1.3.6.1.2.1.2
+    version: 2
+    auth:
+      community: monitor

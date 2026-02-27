@@ -1,0 +1,72 @@
+/* Редактируйте этот файл для изменения оформления */
+
+:root {
+  --bg: #1a1a2e;
+  --card-bg: #16213e;
+  --text: #e8e8e8;
+  --accent: #0f3460;
+  --ok: #00c853;
+  --err: #ff5252;
+}
+
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 1.5rem;
+  line-height: 1.5;
+}
+
+header {
+  margin-bottom: 2rem;
+}
+header h1 { margin: 0 0 0.25rem 0; font-size: 1.5rem; }
+.subtitle { color: #888; font-size: 0.9rem; }
+
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.card {
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
+}
+.card .label { display: block; font-size: 0.8rem; color: #888; }
+.card .value { font-size: 1.2rem; font-weight: 600; }
+.badge { font-size: 0.75rem; padding: 0.2em 0.5em; border-radius: 4px; margin-left: 0.5rem; }
+.badge.ok { background: var(--ok); color: #000; }
+.badge.err { background: var(--err); color: #fff; }
+
+.section {
+  margin-bottom: 2rem;
+}
+.section h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+.hint { font-size: 0.85rem; color: #888; margin-bottom: 1rem; }
+code { background: #333; padding: 0.1em 0.3em; border-radius: 4px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+}
+th, td { padding: 0.75rem 1rem; text-align: left; }
+th { background: var(--accent); font-size: 0.85rem; }
+tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+
+pre {
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+}
+
+footer { margin-top: 2rem; font-size: 0.8rem; color: #666; }

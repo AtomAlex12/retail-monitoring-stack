@@ -1,0 +1,74 @@
+prometheus.exporter.windows "win" {
+  enabled_collectors = [
+    "cpu",
+    "logical_disk",
+    "net",
+    "os",
+    "service",
+    "system",
+  ]
+}
+
+prometheus.remote_write "to_prom" {
+  endpoint {
+    url = "http://192.168.141.49:9090/api/v1/write"
+  }
+}
+
+prometheus.relabel "add_labels_win" {
+  rule {
+    action       = "replace"
+    target_label = "job"
+    replacement  = "retail_windows"
+  }
+
+  rule {
+    action       = "replace"
+    target_label = "store"
+    replacement  = env("COMPUTERNAME")
+  }
+
+  forward_to = [prometheus.remote_write.to_prom.receiver]
+}
+
+prometheus.scrape "win" {
+  targets         = prometheus.exporter.windows.win.targets
+  forward_to      = [prometheus.relabel.add_labels_win.receiver]
+  scrape_interval = "15s"
+
+  job_name = "retail_windows"
+}
+
+prometheus.exporter.snmp "mikrotik" {
+  config_file = "snmp_mikrotik.yml"
+
+  target "router" {
+    address = "192.168.1.1:161"
+    module  = "if_mib,mikrotik"
+    labels = {
+      store = env("COMPUTERNAME"),
+    }
+  }
+}
+
+prometheus.relabel "add_labels_mikrotik" {
+  rule {
+    action       = "replace"
+    target_label = "job"
+    replacement  = "retail_mikrotik"
+  }
+
+  rule {
+    action       = "replace"
+    target_label = "store"
+    replacement  = env("COMPUTERNAME")
+  }
+
+  forward_to = [prometheus.remote_write.to_prom.receiver]
+}
+
+prometheus.scrape "mikrotik_snmp" {
+  targets         = prometheus.exporter.snmp.mikrotik.targets
+  forward_to      = [prometheus.relabel.add_labels_mikrotik.receiver]
+  scrape_interval = "30s"
+}
