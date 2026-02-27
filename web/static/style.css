@@ -23,6 +23,7 @@ header {
   margin-bottom: 2rem;
 }
 header h1 { margin: 0 0 0.25rem 0; font-size: 1.5rem; }
+.version-badge { font-size: 0.65rem; padding: 0.2em 0.5em; background: #ff9800; color: #000; border-radius: 4px; margin-left: 0.5rem; font-weight: normal; }
 .subtitle { color: #888; font-size: 0.9rem; }
 
 .status-cards {
@@ -70,3 +71,27 @@ pre {
 }
 
 footer { margin-top: 2rem; font-size: 0.8rem; color: #666; }
+
+/* Modal */
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal-content {
+  background: var(--card-bg); border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #333; }
+.modal-header h2 { margin: 0; font-size: 1.2rem; }
+.modal-close { background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem; }
+.modal-close:hover { color: #fff; }
+#modal-body { padding: 1.5rem; overflow-y: auto; }
+.detail-section { margin-bottom: 1.5rem; }
+.detail-section h3 { font-size: 1rem; margin-bottom: 0.5rem; color: #0f3460; }
+.detail-section details { margin-top: 0.5rem; }
+.detail-section summary { cursor: pointer; color: #888; }
+.store-link { color: #4fc3f7; cursor: pointer; text-decoration: underline; }
+.store-link:hover { color: #81d4fa; }
+.metric-row { font-family: monospace; font-size: 0.85rem; padding: 0.25rem 0; }
+.if-table { width: 100%; font-size: 0.9rem; }
+.if-table th { text-align: left; padding: 0.5rem; }
+.if-table .up { color: var(--ok); }
+.if-table .down { color: var(--err); }

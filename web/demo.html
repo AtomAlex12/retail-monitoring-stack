@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Store Registry — демо (v0.2.0-beta)</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Store Registry Exporter <span class="version-badge">0.2.0-beta</span></h1>
+    <p class="subtitle">Техническая страница настройки и мониторинга. Клик по точке — детали.</p>
+  </header>
+
+  <section class="status-cards">
+    <div class="card">
+      <span class="label">Prometheus</span>
+      <span class="value">http://192.168.141.49:9090</span>
+      <span class="badge ok">OK</span>
+    </div>
+    <div class="card">
+      <span class="label">Точек онлайн</span>
+      <span class="value">3</span>
+    </div>
+    <div class="card">
+      <span class="label">В реестре</span>
+      <span class="value">3</span>
+    </div>
+    <div class="card">
+      <span class="label">Последняя синхронизация</span>
+      <span class="value">25.02.2025, 16:45:32</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Реестр точек</h2>
+    <p class="hint">Клик по точке — детали: ПК (Windows) и роутер (SNMP).</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Точка (store)</th>
+          <th>Последнее появление</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="store-link" data-store="C4">C4</span></td><td>25.02.2025, 16:45:32</td></tr>
+        <tr><td><span class="store-link" data-store="C2">C2</span></td><td>25.02.2025, 16:45:32</td></tr>
+        <tr><td><span class="store-link" data-store="WS65">WS65</span></td><td>25.02.2025, 16:45:32</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div id="store-modal" class="modal" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Точка</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modal-body">
+        <div class="detail-section">
+          <h3>ПК (Windows)</h3>
+          <div id="detail-windows"></div>
+        </div>
+        <div class="detail-section">
+          <h3>Роутер (SNMP)</h3>
+          <div id="detail-interfaces"></div>
+          <details>
+            <summary>Все SNMP-метрики</summary>
+            <pre id="detail-snmp-raw"></pre>
+          </details>
+        </div>
+        <div class="detail-section">
+          <h3>Метрики Windows</h3>
+          <details>
+            <summary>Показать</summary>
+            <pre id="detail-windows-raw"></pre>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="section">
+    <h2>Статус экспортёра</h2>
+    <pre>{
+  "version": "0.2.0-beta",
+  "prometheus_url": "http://192.168.141.49:9090",
+  "registry_file": "/data/store-registry-state.json",
+  "retention_days": 30,
+  "last_sync": "2025-02-25T16:45:32",
+  "prometheus_reachable": true,
+  "stores_up_now": 3,
+  "stores_in_registry": 3
+}</pre>
+  </section>
+
+  <footer>
+    <p>Grafana — основной дашборд. Эта страница — для настройки и отладки.</p>
+    <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #666;">Демо v0.2.0-beta · При запуске экспортёра — реальные данные</p>
+  </footer>
+
+  <script>
+    const DEMO_DATA = {
+      C4: {
+        windows: [{ metric: "up", value: "1", labels: {} }, { metric: "windows_memory_available_bytes", value: "4294967296", labels: {} }],
+        snmp_interfaces: [{ ifName: "ether1", ifAlias: "", status: "Up" }, { ifName: "lte1", ifAlias: "MAIN_ICCID=89...", status: "Up" }, { ifName: "lte2", ifAlias: "BACKUP_ICCID=89...", status: "Down" }],
+        mikrotik: [{ metric: "snmp_if_oper_status", value: "1", labels: { ifName: "lte1" } }]
+      },
+      C2: { windows: [], snmp_interfaces: [{ ifName: "ether1", ifAlias: "", status: "Up" }], mikrotik: [] },
+      WS65: { windows: [{ metric: "up", value: "1", labels: {} }], snmp_interfaces: [], mikrotik: [] }
+    };
+    function openStoreDetail(store) {
+      document.getElementById('modal-title').textContent = 'Точка: ' + store;
+      document.getElementById('store-modal').hidden = false;
+      const d = DEMO_DATA[store] || { windows: [], snmp_interfaces: [], mikrotik: [] };
+      document.getElementById('detail-windows').innerHTML = d.windows.length ? '<p class="metric-row">up = 1 (онлайн)</p><p class="metric-row">Метрик: ' + d.windows.length + '</p>' : '<p>Нет данных от ПК</p>';
+      document.getElementById('detail-interfaces').innerHTML = d.snmp_interfaces.length ? '<table class="if-table"><thead><tr><th>Интерфейс</th><th>Alias (ICCID/UICC)</th><th>Статус</th></tr></thead><tbody>' + d.snmp_interfaces.map(i => '<tr><td>' + i.ifName + '</td><td>' + (i.ifAlias || '—') + '</td><td class="' + (i.status === 'Up' ? 'up' : 'down') + '">' + i.status + '</td></tr>').join('') + '</tbody></table>' : '<p>Нет данных от роутера</p>';
+      document.getElementById('detail-snmp-raw').textContent = JSON.stringify(d.mikrotik, null, 2);
+      document.getElementById('detail-windows-raw').textContent = JSON.stringify(d.windows, null, 2);
+    }
+    function closeModal() { document.getElementById('store-modal').hidden = true; }
+    document.getElementById('store-modal').addEventListener('click', e => { if (e.target.id === 'store-modal') closeModal(); });
+    document.querySelectorAll('.store-link').forEach(el => { el.onclick = () => openStoreDetail(el.dataset.store); });
+  </script>
+</body>
+</html>

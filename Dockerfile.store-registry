@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY store-registry-exporter.py .
 COPY requirements-registry.txt .
+COPY VERSION .
 COPY web/ ./web/
 
 RUN pip install --no-cache-dir -r requirements-registry.txt

@@ -24,6 +24,7 @@ from flask import Flask, jsonify, send_from_directory
 from prometheus_client import REGISTRY, start_http_server
 from prometheus_client.core import GaugeMetricFamily
 
+VERSION = "0.2.0-beta"
 REGISTRY_FILE = os.environ.get(
     "REGISTRY_FILE",
     os.path.join(os.path.dirname(__file__), "store-registry-state.json"),
@@ -41,6 +42,14 @@ last_sync_time: float = 0
 last_sync_error: str | None = None
 
 app = Flask(__name__, static_folder=os.path.join(WEB_DIR, "static"))
+
+
+def load_version():
+    vfile = os.path.join(os.path.dirname(__file__), "VERSION")
+    if os.path.exists(vfile):
+        with open(vfile, encoding="utf-8") as f:
+            return f.read().strip()
+    return VERSION
 
 
 def load_registry():
@@ -178,6 +187,7 @@ def api_registry():
 def api_status():
     stores_up, err = fetch_stores_from_prometheus()
     return jsonify({
+        "version": load_version(),
         "prometheus_url": PROMETHEUS_URL,
         "registry_file": REGISTRY_FILE,
         "retention_days": RETENTION_DAYS,
@@ -196,6 +206,71 @@ def api_up():
     if err:
         return jsonify({"error": err, "stores": []}), 500
     return jsonify({"stores": sorted(stores_up)})
+
+
+def prometheus_query(query: str):
+    """Выполнить instant-запрос к Prometheus."""
+    url = f"{PROMETHEUS_URL.rstrip('/')}/api/v1/query?{urlencode({'query': query})}"
+    try:
+        with urlopen(url, timeout=10) as resp:
+            data = json.load(resp)
+    except Exception as e:
+        return None, str(e)
+    if data.get("status") != "success":
+        return None, data.get("error", "unknown")
+    return data.get("data", {}).get("result", []), None
+
+
+@app.route("/api/version")
+def api_version():
+    return jsonify({"version": load_version()})
+
+
+@app.route("/api/store/<store>")
+def api_store_detail(store):
+    """Детали по точке: Windows (ПК) и MikroTik (SNMP)."""
+    out = {"version": load_version(), "store": store, "windows": [], "mikrotik": [], "snmp_interfaces": [], "error": None}
+
+    # Windows: все метрики
+    res, err = prometheus_query('{job="retail_windows", store="' + store + '"}')
+    if err:
+        out["error"] = err
+    else:
+        for r in res:
+            m = r.get("metric", {})
+            val = r.get("value", [None, None])[1]
+            out["windows"].append({
+                "metric": m.get("__name__", "?"),
+                "value": val,
+                "labels": {k: v for k, v in m.items() if k not in ("__name__", "job", "store")},
+            })
+
+    # MikroTik / SNMP: все метрики и интерфейсы
+    res, err = prometheus_query('{job="retail_mikrotik", store="' + store + '"}')
+    if not err:
+        seen_if = set()
+        for r in res:
+            m = r.get("metric", {})
+            val = r.get("value", [None, None])[1]
+            name = m.get("__name__", "?")
+            out["mikrotik"].append({
+                "metric": name,
+                "value": val,
+                "labels": {k: v for k, v in m.items() if k not in ("__name__", "job", "store")},
+            })
+            # Интерфейсы из snmp_if_oper_status или snmp_ifOperStatus
+            if name in ("snmp_if_oper_status", "snmp_ifOperStatus") and "ifName" in m:
+                key = m.get("ifName", "")
+                if key and key not in seen_if:
+                    seen_if.add(key)
+                    out["snmp_interfaces"].append({
+                        "ifName": m.get("ifName", "?"),
+                        "ifAlias": m.get("ifAlias", ""),
+                        "status": "Up" if val == "1" else "Down",
+                        "value": val,
+                    })
+
+    return jsonify(out)
 
 
 def run_web():

@@ -3,6 +3,7 @@
 > Система мониторинга розничных точек: Windows‑ПК, роутеры MikroTik (LTE), Grafana Alloy, Prometheus, Grafana.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.2.0--beta-orange)](VERSION)
 [![Grafana Alloy](https://img.shields.io/badge/Grafana-Alloy-orange)](https://grafana.com/docs/alloy/)
 [![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-red)](https://prometheus.io/)
 
@@ -144,6 +145,13 @@ git push -u origin main
 ```
 
 Рекомендуемые темы репозитория: `grafana`, `prometheus`, `alloy`, `mikrotik`, `monitoring`, `retail`
+
+### Версионность
+
+- Версия в файле `VERSION` (сейчас `0.2.0-beta`)
+- При пуше в Git — репозиторий в статусе beta
+- Смена версии: отредактируйте `VERSION`, закоммитьте
+- Для стабильного релиза: `1.0.0` вместо `0.2.0-beta`
 
 ---
 
